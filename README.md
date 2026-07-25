@@ -66,6 +66,7 @@ DELETE ใช้ลบข้อมูล เช่น `DELETE /coffees/4`
 ```
 Spring/
 ├── README.md
+├── Screenshots/                <- ภาพผลการทดสอบแต่ละ endpoint
 └── demo/                       <- Maven project root (pom.xml อยู่ที่นี่)
     ├── mvnw / mvnw.cmd
     ├── pom.xml
@@ -215,6 +216,10 @@ Response `200 OK`:
 ]
 ```
 
+ผลการทดสอบจริง:
+
+![GET /coffees](Screenshots/getAllCoffees.png)
+
 ---
 
 ### 2. GET /coffees/{id} — ดึงตาม id
@@ -229,11 +234,17 @@ Response `200 OK`:
 { "id": 1, "name": "Espresso", "price": 45.0 }
 ```
 
+ผลการทดสอบจริง:
+
+![GET /coffees/{id}](Screenshots/getIdCoffee.png)
+
 กรณีไม่พบ (`404 Not Found`, body ว่าง):
 
 ```cmd
 curl -i http://localhost:8080/coffees/999
 ```
+
+![GET /coffees/999 — 404 Not Found](Screenshots/getIdCoffeeNotFound.png)
 
 ---
 
@@ -271,6 +282,10 @@ curl -i "http://localhost:8080/coffees/search?name=esp"
 curl -i http://localhost:8080/coffees/search
 ```
 
+ผลการทดสอบจริง:
+
+![GET /coffees/search?name=latte](Screenshots/getNameCoffee.png)
+
 > ต้องครอบ URL ด้วย double quote เมื่อมี query string เสมอ เพราะ cmd อาจตีความ `&` เป็นตัวคั่นคำสั่ง
 
 ---
@@ -286,6 +301,10 @@ Response `201 Created`:
 ```json
 { "id": 3, "name": "Cappuccino", "price": 60.0 }
 ```
+
+ผลการทดสอบจริง (POST แล้ว GET ซ้ำเพื่อยืนยันว่าถูกเพิ่มเข้าไปจริง):
+
+![POST /coffees](Screenshots/PostAddCoffee.png)
 
 > `id` ที่ส่งมาใน body จะถูกเขียนทับด้วยค่าที่ระบบสร้างให้เสมอ (เริ่มที่ 3)
 
@@ -303,6 +322,10 @@ Response `200 OK`:
 { "id": 1, "name": "Espresso Doppio", "price": 65.0 }
 ```
 
+ผลการทดสอบจริง:
+
+![PUT /coffees/{id}](Screenshots/putUpdateCoffee.png)
+
 กรณีไม่พบ (`404 Not Found`):
 
 ```cmd
@@ -318,6 +341,10 @@ curl -i -X DELETE http://localhost:8080/coffees/2
 ```
 
 Response `204 No Content` (ไม่มี body)
+
+ผลการทดสอบจริง:
+
+![DELETE /coffees/{id}](Screenshots/deleteCoffee.png)
 
 กรณีไม่พบ (`404 Not Found`):
 
@@ -342,6 +369,20 @@ curl -i http://localhost:8080/coffees
 ```
 
 > บรรทัด PUT/DELETE ใช้ id `3` เพราะเป็น id ที่ POST ก่อนหน้าสร้างให้ (ถ้า POST หลายรอบ id จะเดินหน้าไปเรื่อย ๆ ให้ดูค่า `id` จาก response ของ POST)
+
+## รวมภาพผลการทดสอบ (Screenshots)
+
+ไฟล์ภาพทั้งหมดอยู่ในโฟลเดอร์ [`Screenshots/`](Screenshots)
+
+| ภาพ | ทดสอบอะไร |
+| --- | --- |
+| [getAllCoffees.png](Screenshots/getAllCoffees.png) | `GET /coffees` — ดึงรายการทั้งหมด |
+| [getIdCoffee.png](Screenshots/getIdCoffee.png) | `GET /coffees/{id}` — ดึงตาม id |
+| [getIdCoffeeNotFound.png](Screenshots/getIdCoffeeNotFound.png) | `GET /coffees/{id}` ที่ไม่มีอยู่ — `404 Not Found` |
+| [getNameCoffee.png](Screenshots/getNameCoffee.png) | `GET /coffees/search?name=...` — ค้นหาตามชื่อ |
+| [PostAddCoffee.png](Screenshots/PostAddCoffee.png) | `POST /coffees` — เพิ่มกาแฟใหม่ (`201 Created`) |
+| [putUpdateCoffee.png](Screenshots/putUpdateCoffee.png) | `PUT /coffees/{id}` — แก้ไขข้อมูล |
+| [deleteCoffee.png](Screenshots/deleteCoffee.png) | `DELETE /coffees/{id}` — ลบข้อมูล (`204 No Content`) |
 
 ## ข้อจำกัดที่ควรรู้
 

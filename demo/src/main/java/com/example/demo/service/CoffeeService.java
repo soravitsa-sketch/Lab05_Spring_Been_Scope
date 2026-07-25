@@ -58,5 +58,11 @@ public class CoffeeService {
         coffees.remove(coffee);
         return true;
     }
+
+    public List<Coffee> searchByName(String name) {
+    return coffees.stream()
+            .filter(c -> c.getName().toLowerCase().contains(name.toLowerCase()))
+            .toList();
+    }
 }
 

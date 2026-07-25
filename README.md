@@ -1,7 +1,56 @@
-# Coffee API — Spring Boot Demo
+# Coffee API — Spring Boot Demo (Lab)
 
-REST API ง่าย ๆ สำหรับจัดการรายการกาแฟ (CRUD) เขียนด้วย Spring Boot
+REST API ง่าย ๆ สำหรับจัดการรายการกาแฟ (CRUD + ค้นหาตามชื่อ) เขียนด้วย Spring Boot
 ข้อมูลเก็บอยู่ใน memory (`ArrayList`) เท่านั้น — ข้อมูลจะหายทุกครั้งที่ restart แอป
+
+---
+
+# คำตอบคำถาม Lab
+
+## 1. HTTP method แต่ละตัว (GET/POST/PUT/DELETE) ต่างกันอย่างไร ยกตัวอย่างจากโปรเจกต์ตัวเอง
+
+**Answer:**
+
+GET ใช้ในการดึงข้อมูล เช่น `GET /coffees` หรือ `GET /coffees/search?name=latte`
+
+POST ใช้สร้างข้อมูลใหม่ เช่น `POST http://localhost:8080/coffees -H "Content-Type: application/json" -d '{\"name\":\"Mocha\",\"price\":65}` สร้างกาแฟใหม่ (มอคค่า)
+
+PUT ใช้แก้ไขข้อมูลที่มีอยู่ทั้งก้อน เช่น `PUT -d '{\"name\":\"Latte\",\"price\":50.0}'`
+
+DELETE ใช้ลบข้อมูล เช่น `DELETE /coffees/4`
+
+## 2. ทำไมต้องแยก Controller กับ Service ออกจากกัน มีข้อดีอย่างไรถ้าโปรแกรมโตขึ้น
+
+**Answer:**
+
+เพราะ Controller มีหน้าที่รับ request หรือ response ส่วน Service เก็บ business logic เช่น การค้นหา, เพิ่ม, ลบข้อมูล แยกกันทำให้แต่ละส่วนมีหน้าที่ชัดเจน ถ้าโปรแกรมโตขึ้น เช่น เปลี่ยนจาก REST API เป็น GraphQL ก็ใช้ Service เดิมได้โดยไม่ต้องเขียน logic ซ้ำ ทำให้ประหยัดเวลาได้มากกว่า
+
+## 3. ข้อมูลที่เก็บไว้ใน List ใน memory หายไปตอนไหน และถ้าอยากให้ไม่หายควรทำอย่างไร (ตอบเป็นแนวคิดพอ)
+
+**Answer:**
+
+ข้อมูลจะหายทันทีที่แอป restart หรือ process ถูกปิด เพราะเก็บอยู่ใน RAM ไม่ได้เขียนลง disk ถ้าอยากให้ข้อมูลไม่หาย ต้องเปลี่ยนไปเก็บใน database จริง เช่น MySQL หรือ PostgreSQL เป็นต้น
+
+## 4. @RestController, @GetMapping, @PostMapping, @PathVariable, @RequestBody แต่ละตัวทำหน้าที่อะไร
+
+**Answer:**
+
+`@RestController` มีหน้าที่บอก Spring ว่า Class นี้จัดการ HTTP request และแต่ละ Method จะ return ให้แปลงเป็น JSON กลับไปหา Client ทันที
+
+`@GetMapping` / `@PostMapping` จะบอก Spring ว่า method นี้ผูกกับ HTTP method อะไร และ path อะไร เช่น `@GetMapping("/search")` หมายถึงถ้ามี GET request มาที่ `/coffees/search` ให้เรียก method นี้
+
+`@PathVariable` ใช้ดึงค่าจากส่วนหนึ่งของ URL path มาใส่ในตัวแปร เช่น `@GetMapping("/{id}")` กับ `@PathVariable Long id` ถ้ายิง `GET /coffees/2` ตัวแปร `id` จะมีค่า 2 โดยอัตโนมัติ ชื่อตัวแปรใน `{}` ต้องตรงกับชื่อ parameter เท่านั้น
+
+`@RequestParam` ใช้ดึงค่าจาก query string (ส่วนหลัง `?`) เช่น `@GetMapping("/search")` กับ `@RequestParam String name` ถ้ายิง `GET /coffees/search?name=latte` ตัวแปร `name` จะได้ `"latte"` มา ต่างจาก `@PathVariable` ตรงที่อันนี้ไม่ใช่ส่วนหนึ่งของ path หลัก แต่เป็น optional parameter ต่อท้าย
+
+`@RequestBody` ใช้แปลง JSON ที่ client ส่งมาใน body ของ request ให้กลายเป็น Java object โดยอัตโนมัติ เช่น ตอน `POST /coffees` ที่ body เป็น `{"name":"Mocha","price":65}` Spring จะแปลงเป็น `Coffee` object ให้เลยโดยไม่ต้อง parse JSON เอง
+
+---
+
+# เอกสารโปรเจกต์
+
+> คำสั่งทั้งหมดในเอกสารนี้รันบน **Windows (Command Prompt / cmd.exe)** ได้เลย
+> `curl.exe` มีติดมากับ Windows 10 (1803) ขึ้นไปอยู่แล้ว ไม่ต้องติดตั้งเพิ่ม
 
 ## Tech Stack
 
@@ -35,48 +84,25 @@ Spring/
 ### สิ่งที่ต้องมีก่อน
 
 - **JDK 26** (โปรเจกต์ตั้ง `java.version` เป็น 26 ใน `pom.xml`)
-- ไม่ต้องติดตั้ง Maven เอง — ใช้ Maven Wrapper (`mvnw` / `mvnw.cmd`) ที่มากับโปรเจกต์ได้เลย
+- ไม่ต้องติดตั้ง Maven เอง — ใช้ Maven Wrapper (`mvnw.cmd`) ที่มากับโปรเจกต์ได้เลย
 
-เช็กเวอร์ชัน Java — PowerShell:
+เช็กเวอร์ชัน Java:
 
-```powershell
+```cmd
 java -version
-$env:JAVA_HOME
-```
-
-bash:
-
-```bash
-java -version
-echo $JAVA_HOME
+echo %JAVA_HOME%
 ```
 
 > คำสั่งทั้งหมดต้องรันจากโฟลเดอร์ `demo/` เพราะ `pom.xml` อยู่ที่นั่น
 
-PowerShell:
-
-```powershell
-Set-Location demo
-```
-
-bash:
-
-```bash
+```cmd
 cd demo
 ```
 
 ### 1. รันแอป (โหมด development)
 
-PowerShell:
-
-```powershell
-.\mvnw.cmd spring-boot:run
-```
-
-bash (macOS / Linux / Git Bash):
-
-```bash
-./mvnw spring-boot:run
+```cmd
+mvnw.cmd spring-boot:run
 ```
 
 ถ้าติดตั้ง Maven ไว้ในเครื่องอยู่แล้วก็ใช้ `mvn spring-boot:run` ได้เช่นกัน
@@ -85,38 +111,21 @@ bash (macOS / Linux / Git Bash):
 
 ### 2. Build เป็น JAR แล้วรัน
 
-PowerShell:
-
-```powershell
-.\mvnw.cmd clean package
+```cmd
+mvnw.cmd clean package
 java -jar target\demo-0.0.1-SNAPSHOT.jar
-```
-
-bash:
-
-```bash
-./mvnw clean package
-java -jar target/demo-0.0.1-SNAPSHOT.jar
 ```
 
 ข้าม test ตอน build:
 
-```powershell
-.\mvnw.cmd clean package -DskipTests
+```cmd
+mvnw.cmd clean package -DskipTests
 ```
 
 ### 3. รันเทส
 
-PowerShell:
-
-```powershell
-.\mvnw.cmd test
-```
-
-bash:
-
-```bash
-./mvnw test
+```cmd
+mvnw.cmd test
 ```
 
 ### 4. เปลี่ยน port (ถ้า 8080 ชนกับโปรแกรมอื่น)
@@ -127,35 +136,27 @@ bash:
 server.port=9090
 ```
 
-หรือส่งตอนรัน — PowerShell:
+หรือส่งตอนรัน:
 
-```powershell
-.\mvnw.cmd spring-boot:run "-Dspring-boot.run.arguments=--server.port=9090"
+```cmd
+mvnw.cmd spring-boot:run -Dspring-boot.run.arguments=--server.port=9090
 ```
 
-bash:
+เช็กว่ามีอะไรจอง port 8080 อยู่ (คอลัมน์สุดท้ายคือ PID):
 
-```bash
-./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=9090
-```
-
-> ใน PowerShell ต้องครอบ argument ที่มี `--` ด้วย double quote ไม่งั้นจะโดน PowerShell ตีความเป็น operator
-
-เช็กว่ามีอะไรจอง port 8080 อยู่ (PowerShell):
-
-```powershell
-Get-NetTCPConnection -LocalPort 8080 -State Listen | Select-Object OwningProcess
-Get-Process -Id (Get-NetTCPConnection -LocalPort 8080 -State Listen).OwningProcess
+```cmd
+netstat -ano | findstr :8080
+tasklist /FI "PID eq 12345"
 ```
 
 ### 5. คำสั่ง Maven อื่น ๆ ที่ใช้บ่อย
 
-| คำสั่ง (PowerShell) | คำอธิบาย |
+| คำสั่ง | คำอธิบาย |
 | --- | --- |
-| `.\mvnw.cmd clean` | ลบโฟลเดอร์ `target/` |
-| `.\mvnw.cmd compile` | คอมไพล์อย่างเดียว |
-| `.\mvnw.cmd dependency:tree` | ดู dependency ทั้งหมด |
-| `.\mvnw.cmd -v` | เช็กเวอร์ชัน Maven / Java ที่ใช้อยู่ |
+| `mvnw.cmd clean` | ลบโฟลเดอร์ `target/` |
+| `mvnw.cmd compile` | คอมไพล์อย่างเดียว |
+| `mvnw.cmd dependency:tree` | ดู dependency ทั้งหมด |
+| `mvnw.cmd -v` | เช็กเวอร์ชัน Maven / Java ที่ใช้อยู่ |
 
 ## Data Model
 
@@ -188,34 +189,21 @@ Base URL: `http://localhost:8080/coffees`
 | --- | --- | --- | --- | --- |
 | GET | `/coffees` | ดึงรายการกาแฟทั้งหมด | `200 OK` | — |
 | GET | `/coffees/{id}` | ดึงกาแฟตาม id | `200 OK` | `404 Not Found` |
+| GET | `/coffees/search?name=...` | ค้นหากาแฟจากชื่อ (บางส่วนได้) | `200 OK` | `400 Bad Request` (ไม่ส่ง `name`) |
 | POST | `/coffees` | เพิ่มกาแฟใหม่ | `201 Created` | — |
 | PUT | `/coffees/{id}` | แก้ไขกาแฟตาม id | `200 OK` | `404 Not Found` |
 | DELETE | `/coffees/{id}` | ลบกาแฟตาม id | `204 No Content` | `404 Not Found` |
 
-> **หมายเหตุสำหรับ PowerShell:** ใน Windows PowerShell `curl` เป็น alias ของ `Invoke-WebRequest`
-> ซึ่งใช้ flag แบบ `-X` `-d` ไม่ได้ ต้องเรียก **`curl.exe`** ให้ชัดเจนเสมอ
-> (หรือใช้ `Invoke-RestMethod` แบบ native ตามตัวอย่างที่ให้ไว้ในแต่ละข้อ)
+> **การเขียน JSON ใน cmd:** ต้องครอบ body ด้วย double quote (`"`) แล้ว escape double quote ข้างในด้วย `\"`
+> ใช้ single quote แบบ Linux/macOS ไม่ได้ เพราะ cmd ไม่รู้จัก
+> คำสั่งด้านล่างเขียนเป็นบรรทัดเดียวทั้งหมด ก๊อปวางลง Command Prompt ได้เลย
 
 ---
 
 ### 1. GET /coffees — ดึงทั้งหมด
 
-bash:
-
-```bash
+```cmd
 curl -i http://localhost:8080/coffees
-```
-
-PowerShell:
-
-```powershell
-curl.exe -i http://localhost:8080/coffees
-```
-
-PowerShell แบบ native (ได้ object กลับมาเลย):
-
-```powershell
-Invoke-RestMethod -Uri http://localhost:8080/coffees | Format-Table
 ```
 
 Response `200 OK`:
@@ -231,22 +219,8 @@ Response `200 OK`:
 
 ### 2. GET /coffees/{id} — ดึงตาม id
 
-bash:
-
-```bash
+```cmd
 curl -i http://localhost:8080/coffees/1
-```
-
-PowerShell:
-
-```powershell
-curl.exe -i http://localhost:8080/coffees/1
-```
-
-PowerShell แบบ native:
-
-```powershell
-Invoke-RestMethod -Uri http://localhost:8080/coffees/1
 ```
 
 Response `200 OK`:
@@ -257,43 +231,54 @@ Response `200 OK`:
 
 กรณีไม่พบ (`404 Not Found`, body ว่าง):
 
-```bash
+```cmd
 curl -i http://localhost:8080/coffees/999
 ```
 
-```powershell
-curl.exe -i http://localhost:8080/coffees/999
+---
+
+### 3. GET /coffees/search?name=... — ค้นหาจากชื่อ
+
+ค้นแบบ **บางส่วนของชื่อ** และ **ไม่สนตัวพิมพ์เล็ก/ใหญ่** (`contains` + `toLowerCase`)
+
+```cmd
+curl -i "http://localhost:8080/coffees/search?name=latte"
 ```
 
-> `Invoke-RestMethod` จะ throw exception เมื่อเจอ 404 ถ้าอยากเห็น status code เฉย ๆ ให้ใช้ `curl.exe -i`
-> หรือครอบด้วย `try { ... } catch { $_.Exception.Response.StatusCode }`
+Response `200 OK`:
+
+```json
+[
+  { "id": 2, "name": "Latte", "price": 55.0 }
+]
+```
+
+พิมพ์แค่บางส่วนก็เจอ เช่น `esp` จะเจอ Espresso:
+
+```cmd
+curl -i "http://localhost:8080/coffees/search?name=esp"
+```
+
+ถ้าไม่มีชื่อไหนตรง จะได้ `200 OK` พร้อม array ว่าง (ไม่ใช่ 404):
+
+```json
+[]
+```
+
+ถ้าไม่ส่ง `name` มาเลย จะได้ `400 Bad Request` เพราะ `@RequestParam` บังคับต้องมีค่า:
+
+```cmd
+curl -i http://localhost:8080/coffees/search
+```
+
+> ต้องครอบ URL ด้วย double quote เมื่อมี query string เสมอ เพราะ cmd อาจตีความ `&` เป็นตัวคั่นคำสั่ง
 
 ---
 
-### 3. POST /coffees — เพิ่มกาแฟใหม่
+### 4. POST /coffees — เพิ่มกาแฟใหม่
 
-bash:
-
-```bash
-curl -i -X POST http://localhost:8080/coffees \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Cappuccino","price":60.0}'
-```
-
-PowerShell (ต้อง escape double quote ใน JSON):
-
-```powershell
-curl.exe -i -X POST http://localhost:8080/coffees `
-  -H "Content-Type: application/json" `
-  -d '{\"name\":\"Cappuccino\",\"price\":60.0}'
-```
-
-PowerShell แบบ native (อ่านง่ายกว่า ไม่ต้อง escape):
-
-```powershell
-$body = @{ name = "Cappuccino"; price = 60.0 } | ConvertTo-Json
-Invoke-RestMethod -Method Post -Uri http://localhost:8080/coffees `
-  -ContentType "application/json" -Body $body
+```cmd
+curl -i -X POST http://localhost:8080/coffees -H "Content-Type: application/json" -d "{\"name\":\"Cappuccino\",\"price\":60.0}"
 ```
 
 Response `201 Created`:
@@ -306,30 +291,10 @@ Response `201 Created`:
 
 ---
 
-### 4. PUT /coffees/{id} — แก้ไข
+### 5. PUT /coffees/{id} — แก้ไข
 
-bash:
-
-```bash
-curl -i -X PUT http://localhost:8080/coffees/1 \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Espresso Doppio","price":65.0}'
-```
-
-PowerShell:
-
-```powershell
-curl.exe -i -X PUT http://localhost:8080/coffees/1 `
-  -H "Content-Type: application/json" `
-  -d '{\"name\":\"Espresso Doppio\",\"price\":65.0}'
-```
-
-PowerShell แบบ native:
-
-```powershell
-$body = @{ name = "Espresso Doppio"; price = 65.0 } | ConvertTo-Json
-Invoke-RestMethod -Method Put -Uri http://localhost:8080/coffees/1 `
-  -ContentType "application/json" -Body $body
+```cmd
+curl -i -X PUT http://localhost:8080/coffees/1 -H "Content-Type: application/json" -d "{\"name\":\"Espresso Doppio\",\"price\":65.0}"
 ```
 
 Response `200 OK`:
@@ -340,90 +305,43 @@ Response `200 OK`:
 
 กรณีไม่พบ (`404 Not Found`):
 
-```bash
-curl -i -X PUT http://localhost:8080/coffees/999 \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Ghost","price":0.0}'
-```
-
-```powershell
-curl.exe -i -X PUT http://localhost:8080/coffees/999 `
-  -H "Content-Type: application/json" `
-  -d '{\"name\":\"Ghost\",\"price\":0.0}'
+```cmd
+curl -i -X PUT http://localhost:8080/coffees/999 -H "Content-Type: application/json" -d "{\"name\":\"Ghost\",\"price\":0.0}"
 ```
 
 ---
 
-### 5. DELETE /coffees/{id} — ลบ
+### 6. DELETE /coffees/{id} — ลบ
 
-bash:
-
-```bash
+```cmd
 curl -i -X DELETE http://localhost:8080/coffees/2
-```
-
-PowerShell:
-
-```powershell
-curl.exe -i -X DELETE http://localhost:8080/coffees/2
-```
-
-PowerShell แบบ native:
-
-```powershell
-Invoke-RestMethod -Method Delete -Uri http://localhost:8080/coffees/2
 ```
 
 Response `204 No Content` (ไม่มี body)
 
 กรณีไม่พบ (`404 Not Found`):
 
-```bash
+```cmd
 curl -i -X DELETE http://localhost:8080/coffees/999
-```
-
-```powershell
-curl.exe -i -X DELETE http://localhost:8080/coffees/999
 ```
 
 ---
 
 ## ทดลองครบทุก endpoint รวดเดียว
 
-bash:
+รันทีละบรรทัดใน Command Prompt:
 
-```bash
-BASE=http://localhost:8080/coffees
-
-curl -s $BASE                                   # อ่านทั้งหมด
-curl -s $BASE/1                                 # อ่านตาม id
-curl -s -X POST $BASE -H "Content-Type: application/json" \
-     -d '{"name":"Mocha","price":70.0}'         # สร้าง -> ได้ id 3
-curl -s -X PUT $BASE/3 -H "Content-Type: application/json" \
-     -d '{"name":"Mocha Hot","price":75.0}'     # แก้ไข id 3
-curl -i -X DELETE $BASE/3                       # ลบ id 3
-curl -s $BASE                                   # ตรวจผลลัพธ์
+```cmd
+curl -i http://localhost:8080/coffees
+curl -i http://localhost:8080/coffees/1
+curl -i "http://localhost:8080/coffees/search?name=latte"
+curl -i -X POST http://localhost:8080/coffees -H "Content-Type: application/json" -d "{\"name\":\"Mocha\",\"price\":70.0}"
+curl -i -X PUT http://localhost:8080/coffees/3 -H "Content-Type: application/json" -d "{\"name\":\"Mocha Hot\",\"price\":75.0}"
+curl -i -X DELETE http://localhost:8080/coffees/3
+curl -i http://localhost:8080/coffees
 ```
 
-PowerShell:
-
-```powershell
-$base = "http://localhost:8080/coffees"
-
-Invoke-RestMethod -Uri $base | Format-Table                    # อ่านทั้งหมด
-Invoke-RestMethod -Uri "$base/1"                               # อ่านตาม id
-
-$new = Invoke-RestMethod -Method Post -Uri $base `
-    -ContentType "application/json" `
-    -Body (@{ name = "Mocha"; price = 70.0 } | ConvertTo-Json) # สร้าง -> ได้ id 3
-
-Invoke-RestMethod -Method Put -Uri "$base/$($new.id)" `
-    -ContentType "application/json" `
-    -Body (@{ name = "Mocha Hot"; price = 75.0 } | ConvertTo-Json)
-
-Invoke-RestMethod -Method Delete -Uri "$base/$($new.id)"       # ลบ
-Invoke-RestMethod -Uri $base | Format-Table                    # ตรวจผลลัพธ์
-```
+> บรรทัด PUT/DELETE ใช้ id `3` เพราะเป็น id ที่ POST ก่อนหน้าสร้างให้ (ถ้า POST หลายรอบ id จะเดินหน้าไปเรื่อย ๆ ให้ดูค่า `id` จาก response ของ POST)
 
 ## ข้อจำกัดที่ควรรู้
 
